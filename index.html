@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日外勤拜訪摘要 (含真實錄音功能)</title>
+    <title>每日外勤拜訪摘要(含真實錄音功能)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -146,7 +146,7 @@
             );
         };
 
-        // --- 新增：真實錄音功能組件 ---
+        // --- 修復版：真實錄音功能組件 (針對 iPhone 支援性優化) ---
         const AudioRecorder = ({ title, themeColor, headerRight }) => {
             const [isRecording, setIsRecording] = useState(false);
             const [audioUrl, setAudioUrl] = useState(null);
@@ -154,12 +154,24 @@
             
             const mediaRecorderRef = useRef(null);
             const audioChunksRef = useRef([]);
+            const mimeTypeRef = useRef(""); // 用來儲存當前瀏覽器支援的格式
 
             // 開始錄音
             const startRecording = async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    const mediaRecorder = new MediaRecorder(stream);
+                    
+                    // 偵測支援的 MIME Type (這步驟對 iOS 至關重要)
+                    let mimeType = 'audio/webm'; // 預設值 (Chrome/Android)
+                    if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                        mimeType = 'audio/mp4'; // iOS Safari 優先支援
+                    } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+                        mimeType = 'audio/aac';
+                    }
+                    mimeTypeRef.current = mimeType;
+
+                    // 使用偵測到的 mimeType 創建 Recorder
+                    const mediaRecorder = new MediaRecorder(stream, { mimeType });
                     mediaRecorderRef.current = mediaRecorder;
                     audioChunksRef.current = [];
 
@@ -170,11 +182,12 @@
                     };
 
                     mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+                        // 使用正確的 mimeType 建立 Blob，確保播放器能識別
+                        const audioBlob = new Blob(audioChunksRef.current, { type: mimeTypeRef.current });
                         const url = URL.createObjectURL(audioBlob);
                         setAudioUrl(url);
                         
-                        // 停止所有音軌以釋放麥克風
+                        // 停止所有音軌以釋放麥克風，讓音訊切換回揚聲器輸出
                         stream.getTracks().forEach(track => track.stop());
                     };
 
@@ -264,7 +277,7 @@
                                     <span className="text-sm font-medium text-gray-700">錄音完成</span>
                                 </div>
                                 
-                                <audio controls src={audioUrl} className="w-full h-8 mb-3" />
+                                <audio controls playsInline src={audioUrl} className="w-full h-8 mb-3" />
                                 
                                 <button 
                                     onClick={deleteRecording}
