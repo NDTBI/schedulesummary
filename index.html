@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日外勤拜訪摘要(含真實錄音功能)</title>
+    <title>每日外勤拜訪摘要 (UI優化版)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -56,24 +56,13 @@
         const ChevronRight = (props) => <IconWrapper icon="fa-chevron-right" {...props} />;
         const CalendarIcon = (props) => <IconWrapper icon="fa-calendar" {...props} />; 
         const Clock = (props) => <IconWrapper icon="fa-clock" {...props} />;
-        const MapPin = (props) => <IconWrapper icon="fa-map-marker-alt" {...props} />;
-        const MapIcon = (props) => <IconWrapper icon="fa-map" {...props} />;
         const X = (props) => <IconWrapper icon="fa-times" {...props} />;
-        const Sparkles = (props) => <IconWrapper icon="fa-wand-magic-sparkles" {...props} />;
-        const Loader2 = (props) => <IconWrapper icon="fa-spinner fa-spin" {...props} />;
         const User = (props) => <IconWrapper icon="fa-user" {...props} />;
         const CheckSquare = (props) => <IconWrapper icon="fa-check-square" {...props} />;
         const FileText = (props) => <IconWrapper icon="fa-file-lines" {...props} />;
-        const Stethoscope = (props) => <IconWrapper icon="fa-stethoscope" {...props} />;
-        const School = (props) => <IconWrapper icon="fa-graduation-cap" {...props} />;
-        const Award = (props) => <IconWrapper icon="fa-award" {...props} />;
-        const Smile = (props) => <IconWrapper icon="fa-face-smile" {...props} />;
-        const Phone = (props) => <IconWrapper icon="fa-phone" {...props} />;
-        const Users = (props) => <IconWrapper icon="fa-users" {...props} />;
-        const ExternalLink = (props) => <IconWrapper icon="fa-up-right-from-square" {...props} />;
+        const MapIcon = (props) => <IconWrapper icon="fa-map" {...props} />;
         const Mic = (props) => <IconWrapper icon="fa-microphone" {...props} />;
         const StopCircle = (props) => <IconWrapper icon="fa-stop-circle" {...props} />;
-        const PlayCircle = (props) => <IconWrapper icon="fa-play-circle" {...props} />;
         const Trash = (props) => <IconWrapper icon="fa-trash-can" {...props} />;
         const ChevronDown = (props) => <IconWrapper icon="fa-chevron-down" {...props} />;
 
@@ -146,7 +135,7 @@
             );
         };
 
-        // --- 修復版：真實錄音功能組件 (針對 iPhone 支援性優化) ---
+        // --- 真實錄音功能組件 (iOS修復版) ---
         const AudioRecorder = ({ title, themeColor, headerRight }) => {
             const [isRecording, setIsRecording] = useState(false);
             const [audioUrl, setAudioUrl] = useState(null);
@@ -154,23 +143,20 @@
             
             const mediaRecorderRef = useRef(null);
             const audioChunksRef = useRef([]);
-            const mimeTypeRef = useRef(""); // 用來儲存當前瀏覽器支援的格式
+            const mimeTypeRef = useRef(""); 
 
-            // 開始錄音
             const startRecording = async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     
-                    // 偵測支援的 MIME Type (這步驟對 iOS 至關重要)
-                    let mimeType = 'audio/webm'; // 預設值 (Chrome/Android)
+                    let mimeType = 'audio/webm'; 
                     if (MediaRecorder.isTypeSupported('audio/mp4')) {
-                        mimeType = 'audio/mp4'; // iOS Safari 優先支援
+                        mimeType = 'audio/mp4'; 
                     } else if (MediaRecorder.isTypeSupported('audio/aac')) {
                         mimeType = 'audio/aac';
                     }
                     mimeTypeRef.current = mimeType;
 
-                    // 使用偵測到的 mimeType 創建 Recorder
                     const mediaRecorder = new MediaRecorder(stream, { mimeType });
                     mediaRecorderRef.current = mediaRecorder;
                     audioChunksRef.current = [];
@@ -182,12 +168,9 @@
                     };
 
                     mediaRecorder.onstop = () => {
-                        // 使用正確的 mimeType 建立 Blob，確保播放器能識別
                         const audioBlob = new Blob(audioChunksRef.current, { type: mimeTypeRef.current });
                         const url = URL.createObjectURL(audioBlob);
                         setAudioUrl(url);
-                        
-                        // 停止所有音軌以釋放麥克風，讓音訊切換回揚聲器輸出
                         stream.getTracks().forEach(track => track.stop());
                     };
 
@@ -201,7 +184,6 @@
                 }
             };
 
-            // 停止錄音
             const stopRecording = () => {
                 if (mediaRecorderRef.current && isRecording) {
                     mediaRecorderRef.current.stop();
@@ -209,13 +191,11 @@
                 }
             };
 
-            // 刪除重錄
             const deleteRecording = (e) => {
                 e.stopPropagation();
                 setAudioUrl(null);
             };
 
-            // 根據主題色設定樣式
             const themeStyles = {
                 indigo: {
                     bar: "bg-indigo-500",
@@ -257,7 +237,6 @@
                             }
                         `}
                     >
-                        {/* 狀態 1: 正在錄音 */}
                         {isRecording && (
                             <>
                                 <div className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center text-white mb-2 recording-pulse shadow-lg">
@@ -266,8 +245,6 @@
                                 <span className="text-sm font-bold text-red-500 animate-pulse">錄音中... 點擊停止</span>
                             </>
                         )}
-
-                        {/* 狀態 2: 錄音完成 (顯示播放器) */}
                         {!isRecording && audioUrl && (
                             <div className="w-full px-4 flex flex-col items-center">
                                 <div className="flex items-center gap-3 mb-3">
@@ -276,25 +253,15 @@
                                     </div>
                                     <span className="text-sm font-medium text-gray-700">錄音完成</span>
                                 </div>
-                                
                                 <audio controls playsInline src={audioUrl} className="w-full h-8 mb-3" />
-                                
-                                <button 
-                                    onClick={deleteRecording}
-                                    className="px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 rounded border border-red-200 flex items-center transition-colors"
-                                >
+                                <button onClick={deleteRecording} className="px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 rounded border border-red-200 flex items-center transition-colors">
                                     <Trash className="mr-1.5" /> 刪除並重新錄音
                                 </button>
                             </div>
                         )}
-
-                        {/* 狀態 3: 待機 (尚未錄音) */}
                         {!isRecording && !audioUrl && (
                             <>
-                                <div className={`
-                                    w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center 
-                                    ${currentTheme.iconText} group-hover:scale-110 transition-transform mb-2
-                                `}>
+                                <div className={`w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center ${currentTheme.iconText} group-hover:scale-110 transition-transform mb-2`}>
                                     <Mic className="text-xl leading-none" />
                                 </div>
                                 <span className={`text-xs text-gray-400 font-medium ${currentTheme.textGroup}`}>
@@ -307,33 +274,31 @@
             );
         };
 
-        // --- 模擬產品資料 ---
-        const PRODUCT_OPTIONS = [
-            "A產品",
-            "B產品",
-            "C產品"
-        ];
+        // --- 用於基本資訊的單個項目組件 ---
+        const InfoItem = ({ icon, label, children, isLast }) => (
+            <div className="flex items-start">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mr-4 flex-shrink-0">
+                     <i className={`fa-solid ${icon} text-xl`}></i>
+                </div>
+                <div className="flex-1">
+                    <p className="text-xs text-gray-400 mb-1">{label}</p>
+                    <div className="text-sm font-medium text-gray-900 leading-relaxed">
+                        {children}
+                    </div>
+                </div>
+            </div>
+        );
 
-        // --- 主應用程式 ---
+        const PRODUCT_OPTIONS = ["A產品", "B產品", "C產品"];
+
         const CalendarApp = () => {
-            // 狀態管理
             const [currentDate, setCurrentDate] = useState(new Date());
             const [selectedDate, setSelectedDate] = useState(new Date());
-            
-            // 詳細資訊 Modal 狀態
             const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
             const [selectedEvent, setSelectedEvent] = useState(null);
             
-            // AI 相關狀態
-            const [isAIModalOpen, setIsAIModalOpen] = useState(false);
-            const [aiPrompt, setAiPrompt] = useState('');
-            const [isGenerating, setIsGenerating] = useState(false);
-
-            // 模擬當月數據 (全域)
-            const currentMonthStats = {
-                coverage: "85%",
-                completion: "90%"
-            };
+            // 模擬當月數據
+            const currentMonthStats = { coverage: "85%", completion: "90%" };
 
             // 模擬行程數據
             const [events, setEvents] = useState([
@@ -371,45 +336,52 @@
                 }
             ]);
 
-            // 生成模擬詳細資料的輔助函式
             const getEventDetailData = (event) => {
                 const parts = event.title.replace('【拜訪】', '').split('_');
-                const doctorName = parts[0] || "未知醫師";
-                const hospitalName = parts[2] || "未知醫院";
-                const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(hospitalName);
+                const doctorName = parts[0] || "陳醫師"; // 預設為陳醫師以符合截圖
+                const hospitalName = "國立臺灣大學醫學院附設醫院"; // 鎖定為截圖中的醫院
 
                 return {
-                ...event,
-                doctorInfo: {
-                    name: doctorName,
-                    hospital: hospitalName,
-                    mapUrl: mapUrl,
-                    visitType: " 產品推廣與學術溝通 / 面對面拜訪",
-                    address: "台北市中正區中山南路7號",
-                    department: "總醫師 / 內科 / 神經內科 / P1",
-                    age: "男 / 52歲",
-                    achievement: "是, 台灣內科醫學會 常務理事 / 是",
-                    personality: "較不願意嘗試新藥 / 喜歡品紅酒",
-                    phone: "02-23971920(4341) / 0987654321 / doctor@com.tw",
-                    education: "國立台灣大學醫學系學士 / 美國約翰霍普金斯大學博士",
-                    specialachievement: "協助成立台大醫院腦中風中心"
-                },
-                todos: [
-                    "贈送中化禮品: 需先至土辦拿取禮品",
-                    "詢問醫師開藥狀況",
-                    "帶上一份最新的醫學期刊摘要"
-                ],
-                summary: {
-                    lastVisit: "針對主力產品DEF，客戶回饋從不認同/反對轉為中立，但醫師仍對副作用數據有疑慮，需要更具公信力的證據",
-                    salesSummary: "本季該醫院產品ABC銷量成長15%，銷售目標達成率 92%",
-                    suggestion: "根據過往拜訪經驗，建議下次拜訪訂於下星期一下午診結束後（約16:30）",
-                    prescriptionTrend: "產品:ABC 10KG/BAG / 階段:議價 / 預計完成日期:2025/01/31", 
-                    promotionSuggestion: [
-                        "NO.1: A產品: Key message: abc; 工具: def ...",
-                        "NO.2: B產品: Key message: efficacy data; 工具: iPad detail aid",
-                        "NO.3: C產品: Key message: safety profile; 工具: clinical paper"
-                    ]
-                }
+                    ...event,
+                    doctorInfo: {
+                        visitType: "產品推廣與學術溝通 / 面對面拜訪",
+                        
+                        // 依照截圖更新欄位
+                        doctorStr: `${doctorName} / 總醫師 / 內科 / 神經內科 / P1`,
+                        
+                        hospital: hospitalName,
+                        hospitalAddress: "台北市中正區中山南路7號",
+                        mapUrl: "https://maps.google.com",
+                        
+                        genderAge: "男 / 52歲",
+                        
+                        contact: "02-23971920(4341) / 0987654321 / doctor@com.tw",
+                        
+                        education: "國立台灣大學醫學系學士 / 美國約翰霍普金斯大學博士",
+                        
+                        associationRole: "是, 台灣內科醫學會 常務理事 / 是",
+                        associationLabel: "是否為公(協)會理事長、幹部、小組長 / 是否為主要決策者",
+                        
+                        specialAchievement: "協助成立台大醫院腦中風中心",
+                        
+                        notes: "較不願意嘗試新藥 / 喜歡品紅酒"
+                    },
+                    todos: [
+                        "贈送中化禮品: 需先至土辦拿取禮品",
+                        "詢問醫師開藥狀況",
+                        "帶上一份最新的醫學期刊摘要"
+                    ],
+                    summary: {
+                        lastVisit: "針對主力產品DEF，客戶回饋從不認同/反對轉為中立，但醫師仍對副作用數據有疑慮，需要更具公信力的證據",
+                        salesSummary: "本季該醫院產品ABC銷量成長15%，銷售目標達成率 92%",
+                        suggestion: "根據過往拜訪經驗，建議下次拜訪訂於下星期一下午診結束後（約16:30）",
+                        prescriptionTrend: "產品:ABC 10KG/BAG / 階段:議價 / 預計完成日期:2025/01/31", 
+                        promotionSuggestion: [
+                            "NO.1: A產品: Key message: abc; 工具: def ...",
+                            "NO.2: B產品: Key message: efficacy data; 工具: iPad detail aid",
+                            "NO.3: C產品: Key message: safety profile; 工具: clinical paper"
+                        ]
+                    }
                 };
             };
 
@@ -443,50 +415,6 @@
                 const detailData = getEventDetailData(event);
                 setSelectedEvent(detailData);
                 setIsDetailModalOpen(true);
-            };
-
-            // Gemini AI 行程生成 (僅保留邏輯，隱藏UI)
-            const handleAIGenerate = async () => {
-                if (!aiPrompt.trim()) return;
-                setIsGenerating(true);
-                const apiKey = ""; 
-                try {
-                const systemPrompt = `You are a calendar assistant. Return JSON.`;
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-                    {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: aiPrompt }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] },
-                        generationConfig: { responseMimeType: "application/json" }
-                    })
-                    }
-                );
-                const data = await response.json();
-                if (data.candidates && data.candidates[0].content) {
-                    const result = JSON.parse(data.candidates[0].content.parts[0].text);
-                    const aiEvent = {
-                        id: Date.now(),
-                        title: result.title,
-                        date: new Date(result.date),
-                        type: result.type,
-                        time: result.time,
-                        location: result.location
-                    };
-                    setEvents([...events, aiEvent]);
-                    setCurrentDate(new Date(result.date));
-                    setSelectedDate(new Date(result.date));
-                    setAiPrompt('');
-                    setIsAIModalOpen(false);
-                }
-                } catch (error) {
-                    console.error("AI Error:", error);
-                    alert("AI 請求失敗");
-                } finally {
-                    setIsGenerating(false);
-                }
             };
 
             const calendarDays = getDaysInMonth(currentDate);
@@ -624,40 +552,67 @@
 
                         <div className="p-6 space-y-6 bg-gray-50/50">
                             
-                            {/* 基本資訊 */}
-                            <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
-                            <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
-                                <User className="w-4 h-4 mr-2" /> 基本資訊
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
-                                <div className="flex items-start">
-                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg mr-3"><Users className="w-4 h-4" /></div>
-                                <div>
-                                    <p className="text-xs text-gray-500">拜訪目的 / 類型</p>
-                                    <p className="text-sm font-medium text-gray-900">{selectedEvent.doctorInfo.visitType}</p>
+                            {/* --- 基本資訊 (完全依照截圖重新設計) --- */}
+                            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+                                <h3 className="text-base font-bold text-gray-500 mb-6 flex items-center">
+                                    <User className="w-4 h-4 mr-2" /> 基本資訊
+                                </h3>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                                    {/* 左欄 1: 拜訪目的 */}
+                                    <InfoItem icon="fa-users" label="拜訪目的 / 類型">
+                                        {selectedEvent.doctorInfo.visitType}
+                                    </InfoItem>
+
+                                    {/* 右欄 1: 醫師/職稱 */}
+                                    <InfoItem icon="fa-stethoscope" label="醫師 / 職稱 / 部門 / HCP科別 / HCP分級">
+                                        {selectedEvent.doctorInfo.doctorStr}
+                                    </InfoItem>
+
+                                    {/* 左欄 2: 客戶 */}
+                                    <InfoItem icon="fa-map-marker-alt" label="客戶">
+                                        <div className="flex flex-col">
+                                            <span>{selectedEvent.doctorInfo.hospital}</span>
+                                            <span className="text-gray-500 text-xs mt-0.5">{selectedEvent.doctorInfo.hospitalAddress}</span>
+                                            <a href={selectedEvent.doctorInfo.mapUrl} target="_blank" className="inline-flex items-center mt-1.5 text-xs text-indigo-600 font-semibold hover:text-indigo-800 hover:underline">
+                                                <MapIcon className="w-3 h-3 mr-1" />
+                                                查看 Google 地圖 <i className="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>
+                                            </a>
+                                        </div>
+                                    </InfoItem>
+
+                                    {/* 右欄 2: 性別/年齡 */}
+                                    <InfoItem icon="fa-user" label="性別 / 年齡">
+                                        {selectedEvent.doctorInfo.genderAge}
+                                    </InfoItem>
+
+                                    {/* 左欄 3: 電話 */}
+                                    <InfoItem icon="fa-phone" label="電話分機 / 行動電話 / 電子郵件">
+                                        {selectedEvent.doctorInfo.contact}
+                                    </InfoItem>
+
+                                    {/* 右欄 3: 學歷 */}
+                                    <InfoItem icon="fa-graduation-cap" label="學歷">
+                                        {selectedEvent.doctorInfo.education}
+                                    </InfoItem>
+
+                                    {/* 左欄 4: 公會 */}
+                                    <InfoItem icon="fa-award" label={selectedEvent.doctorInfo.associationLabel}>
+                                        {selectedEvent.doctorInfo.associationRole}
+                                    </InfoItem>
+
+                                    {/* 右欄 4: 特殊事蹟 */}
+                                    <InfoItem icon="fa-medal" label="特殊事蹟">
+                                        {selectedEvent.doctorInfo.specialAchievement}
+                                    </InfoItem>
+
+                                    {/* 左欄 5: 備註 */}
+                                    <InfoItem icon="fa-face-smile" label="備註">
+                                        {selectedEvent.doctorInfo.notes}
+                                    </InfoItem>
                                 </div>
-                                </div>
-                                <div className="flex items-start">
-                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg mr-3"><Stethoscope className="w-4 h-4" /></div>
-                                <div>
-                                    <p className="text-xs text-gray-500">醫師 / 職稱 / 部門</p>
-                                    <p className="text-sm font-medium text-gray-900">{selectedEvent.doctorInfo.name} / {selectedEvent.doctorInfo.department}</p>
-                                </div>
-                                </div>
-                                <div className="flex items-start">
-                                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg mr-3"><MapPin className="w-4 h-4" /></div>
-                                <div>
-                                    <p className="text-xs text-gray-500">客戶</p>
-                                    <p className="text-sm font-medium text-gray-900">{selectedEvent.doctorInfo.hospital}</p>
-                                    <a href={selectedEvent.doctorInfo.mapUrl} target="_blank" className="inline-flex items-center mt-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:underline">
-                                    <MapIcon className="w-3 h-3 mr-1" />
-                                    Google 地圖
-                                    </a>
-                                </div>
-                                </div>
-                                {/* 更多基本資訊 (省略重複結構以節省空間，功能與上版相同) */}
                             </div>
-                            </div>
+                            {/* --- 基本資訊結束 --- */}
 
                             {/* 待辦任務 */}
                             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
@@ -671,7 +626,7 @@
                             </ul>
                             </div>
 
-                            {/* 數據與摘要 (含三欄產品推廣) */}
+                            {/* 數據與摘要 */}
                             <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
                                 <FileText className="w-4 h-4 mr-2" /> 數據與摘要
@@ -711,9 +666,8 @@
                             </div>
                             </div>
 
-                            {/* 區塊 5: 真實錄音功能區 */}
+                            {/* 錄音功能區 */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                                {/* 左側：產品反饋錄音 */}
                                 <AudioRecorder 
                                     title="產品反饋" 
                                     themeColor="indigo"
@@ -725,8 +679,6 @@
                                         />
                                     }
                                 />
-
-                                {/* 右側：訪談反饋錄音 */}
                                 <AudioRecorder 
                                     title="訪談反饋" 
                                     themeColor="emerald"
@@ -747,3 +699,4 @@
     </script>
 </body>
 </html>
+```順帶一提，如果要取得所有應用程式的完整功能，請開啟 Gemini 系列應用程式活動記錄。
